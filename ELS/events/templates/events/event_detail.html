@@ -1,0 +1,14 @@
+
+  <h1>{{ event.name }}</h1>
+  <p>{{ event.description }}</p>
+  <p>Date: {{ event.date }}</p>
+  <p>Time: {{ event.time }}</p>
+  <p>Location: {{ event.location }}</p>
+  <p>Ticket Capacity: {{ event.ticket_capacity }}</p>
+  <p>Ticket Price: {{ event.ticket_price }}</p>
+  <p>Available Tickets: {{event.available_tickets}}</p>
+  <p>Tickets Sold:  {{event.num_tickets_sold}}</p>
+  <a href="{% url 'edit_event' event.pk %}">Edit Event</a>
+  <a href="{% url 'delete_event' event.pk %}">Delete Event</a>
+  <a href="{% url 'make_booking' event.pk %}">Make Booking</a>
+  <a href="{% url 'view_bookings' event.pk %}">Bookings</a>

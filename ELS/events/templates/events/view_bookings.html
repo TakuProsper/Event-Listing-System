@@ -1,0 +1,10 @@
+  <h1>Bookings for {{ event.name }}</h1>
+  <ul>
+    {% for booking in bookings %}
+      <li>
+        {{ booking.user.username }} ({{ booking.user.email }}) : {{ booking.user.ticket_quantity}} , ${{booking.total_cost}}, Date: {{booking.booking_date}}
+      </li>
+    {% empty %}
+      <li>No bookings for this event.</li>
+    {% endfor %}
+  </ul>

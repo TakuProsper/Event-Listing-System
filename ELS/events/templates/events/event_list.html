@@ -1,0 +1,9 @@
+  <h1>Event List</h1>
+  <ul>
+    {% for event in events %}
+      <li>
+        {{ event.name }} ({{ event.date }})
+        <a href="{% url 'event_detail' event.pk %}">View Details</a>
+      </li>
+    {% endfor %}
+  </ul>
