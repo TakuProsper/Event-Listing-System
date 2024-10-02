@@ -11,14 +11,15 @@ import RegisterPage from './pages/RegisterPage';
 import Footer from './components/Footer';
 import BookingDetails from './components/BookingDetails';
 import UserBookings from './components/UserBookings';
+import './App.css';
+import Layout from './Layout';
 
 function App() {
   return (
-    
-      <BrowserRouter>
+    <BrowserRouter>
       <AuthProvider>
-        <div>
-          <Navbar />
+        <Layout>
+        <div className="main-content">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/events/:eventId" element={<EventDetail />} />
@@ -27,13 +28,12 @@ function App() {
             <Route path="/register" exact element={<RegisterPage />} />
             <Route path="/bookings/:id" element={<BookingDetails />} />
             <Route path="/bookings" element={<UserBookings/>} />
-
           </Routes>
+          </div>
           <Footer/>
-        </div>
-        </AuthProvider>
-      </BrowserRouter>
-    
+        </Layout>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

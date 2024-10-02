@@ -297,3 +297,17 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'takueprosper00@gmail.com'  # Replace with your Gmail address
+EMAIL_HOST_PASSWORD = 'prnksdygqbmnwnjr' 
+
+#Payment gateway
+# PesePay API Configuration
+PESEPAY_API_KEY = '2fc1978431b434e4993a88a4d44e795f'  # Replace with your encryption key
+PESEPAY_MERCHANT_ID = 'cdf9a77f-7348-4654-ad5a-11609b5672a7'  # Replace with your integration key
+PESEPAY_API_URL = 'https://api.pesepay.com/api/payments-engine/v1/payments/initiate'  # Default PesePay API URL
+

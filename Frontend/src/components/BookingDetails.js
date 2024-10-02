@@ -8,6 +8,7 @@ const BookingDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelled, setCancelled] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false); // State for cancel loading
 
   useEffect(() => {
     // Fetch booking details by ID
@@ -33,6 +34,8 @@ const BookingDetails = () => {
 
     const accessToken = JSON.parse(token).access;
 
+    setCancelLoading(true); // Set cancel loading to true when submitting
+
     try {
       const response = await axios.delete(
         `http://localhost:8000/api/cancel-booking/${id}/`,
@@ -43,10 +46,12 @@ const BookingDetails = () => {
           }
         }
       );
-      
+
       setCancelled(true);
     } catch (error) {
       setError(error.response?.data?.error || "An error occurred.");
+    } finally {
+      setCancelLoading(false); // Set cancel loading to false when done
     }
   };
 
@@ -54,28 +59,53 @@ const BookingDetails = () => {
   if (error) return <p>{error}</p>;
 
   return (
-    <div>
-      <h2>Booking Details</h2>
-      {booking ? (
-        <div>
-          <p><strong>Event:</strong> {booking.event_name}</p>
-          <p><strong>Date:</strong> {new Date(booking.event_date).toLocaleDateString()}</p>
-          <p><strong>Ticket Quantity:</strong> {booking.ticket_quantity}</p>
-          <p><strong>Total Cost:</strong> ${booking.total_cost}</p>
-          <p><strong>Location:</strong> {booking.event_location}</p>
-          <p><strong>Notes:</strong> {booking.event_description}</p>
-          <p><strong>Time:</strong> {booking.event_time}</p>
-          {/* You can add more booking details here */}
-          {!cancelled && (
-            <button type="button" onClick={handleCancel}>Cancel Booking</button>
-          )}
-          {cancelled && (
-            <p>Booking cancelled!</p>
-          )}
+    <div className='BookingDetails'>
+      <section className="vh-150">
+        <div className="container py-5 h-100">
+          <div className="row d-flex justify-content-center align-items-center h-100">
+            <div className="col col-xl-10 d-flex justify-content-center align-items-center">
+              <div className="card" style={{ borderRadius: "1rem", width: '100%', maxWidth: '600px' }}>
+                <div className="row g-0">
+                  <div className="col-md-12 col-lg-12 d-flex align-items-center">
+                    <div className="card-body p-4 p-lg-5 text-black">
+                      <div className='w-100'> 
+                        <h2>Booking Details</h2>
+                        {booking ? (
+                          <div>
+                            <p><strong>Event name:</strong> {booking.event_name}</p>
+                            <p><strong>Description:</strong></p><p>{booking.event_description}</p>
+                            <p><strong>Date:</strong> {new Date(booking.event_date).toLocaleDateString()}</p>
+                            <p><strong>Ticket Quantity:</strong> {booking.ticket_quantity}</p>
+                            <p><strong>Total Cost:</strong> ${booking.total_cost}</p>
+                            <p><strong>Location:</strong> {booking.event_location}</p>
+                            <p><strong>Time:</strong> {booking.event_time}</p>
+                            {/* You can add more booking details here */}
+                            {!cancelled && (
+                              <button 
+                                className='btn button' 
+                                type="button" 
+                                onClick={handleCancel} 
+                                disabled={cancelLoading} // Disable the button when cancel is loading
+                              >
+                                {cancelLoading ? "Processing..." : "Cancel Booking"} {/* Change button text based on loading state */}
+                              </button>
+                            )}
+                            {cancelled && (
+                              <p>Booking cancelled!</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p>No booking details found.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <p>No booking details found.</p>
-      )}
+      </section>
     </div>
   );
 };

@@ -1,18 +1,11 @@
 from rest_framework import serializers
-from .models import Event
+from .models import Event, Booking
 
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = ['id', 'name', 'description', 'date', 'time', 'location', 'ticket_capacity', 'available_tickets', 'ticket_price', 'num_tickets_sold']
         
-# serializers.py
-from rest_framework import serializers
-from .models import Booking
-
-# serializers.py
-from rest_framework import serializers
-from .models import Booking
 
 class BookingSerializer(serializers.ModelSerializer):
     event_date = serializers.DateField(source='event.date', read_only=True)
@@ -27,7 +20,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
-        # Custom logic if needed
+        
         return super().create(validated_data)
 
         

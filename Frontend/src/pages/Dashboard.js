@@ -58,20 +58,20 @@ function Dashboard() {
 
   return (
     <div>
-      <div className="container-fluid" style={{ paddingTop: "100px" }}>
-        <div className="row">
-          <nav className="col-md-4 d-none d-md-block bg-light sidebar mt-4">
+      <>
+      <section  className="vh-100">
+      <div className="container-fluid h-100" style={{ paddingTop: "25px" }}>
+        <div className="row h-100">
+          <nav className="col-md-4 d-none d-md-block bg-light  sidebar mt-4">
             <div className="sidebar-sticky">
-              <ul className="nav flex-column mb-2">
-                <li className="nav-item">
+
                   <UserBookings userId={user_id} />
-                </li>
-              </ul>
+
             </div>
           </nav>
           <main role="main" className="col-md-7 ml-sm-auto col-lg-8 pt-3 px-4">
-            <div className="d-flex justify-content-center flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-              <h1 className="h2">Hello {username}!</h1>
+            <div className="d-flex flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+              <h1 className="h2">Hello {username}, check out the upcoming events!</h1>
               <div className="btn-toolbar mb-2 mb-md-0" style={{ marginLeft: "20px" }}>
                 <div style={{ position: 'relative' }}>
                   <button
@@ -124,7 +124,6 @@ function Dashboard() {
                 </div>
               </div>
             </div>
-            <h2>Upcoming Events</h2>
             <div className="table-responsive">
               <table className="table table-striped table-sm">
                 <thead>
@@ -158,6 +157,8 @@ function Dashboard() {
           </main>
         </div>
       </div>
+      </section>
+      </>
     </div>
   );
 }

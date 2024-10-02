@@ -1,151 +1,80 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Event, Booking
-from .forms import EventForm, BookingForm
 from django.contrib.auth import get_user_model
-from django.db import models
-from rest_framework.decorators import api_view
-from rest_framework.decorators import permission_classes
+from django.core.mail import send_mail
+from django.conf import settings
+import requests
+import json
+from decimal import Decimal
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-
-def home(request):
-    return render(request, 'events/home.html')
-
-@login_required
-def create_event(request):
-    if request.method == 'POST':
-        form = EventForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('event_list')
-    else:
-        form = EventForm()
-    return render(request, 'events/create_event.html', {'form': form})
-
-@login_required
-def event_list(request):
-    events = Event.objects.all()
-    return render(request, 'events/event_list.html', {'events': events})
-
-@login_required
-def event_detail(request, pk):
-    event = Event.objects.get(pk=pk)
-    return render(request, 'events/event_detail.html', {'event': event})
-
-@login_required
-def edit_event(request, pk):
-    event = Event.objects.get(pk=pk)
-    if request.method == 'POST':
-        form = EventForm(request.POST, instance=event)
-        if form.is_valid():
-            form.save()
-            return redirect('event_list')
-    else:
-        form = EventForm(instance=event)
-    return render(request, 'events/edit_event.html', {'form': form})
-
-@login_required
-def delete_event(request, pk):
-
-    event = get_object_or_404(Event, pk=pk)
-
-    if request.method == 'POST':
-
-        event.delete()
-
-        return redirect('event_list')  # Redirect to the event list page
-
-    return render(request, 'events/delete_event.html', {'event': event})
-
-@login_required
-def make_booking(request, pk):
-
-    event = Event.objects.get(id=pk)
-
-    if request.method == 'POST':
-
-        ticket_quantity = int(request.POST.get('ticket_quantity'))
-
-        if ticket_quantity > event.available_tickets:
-
-            return render(request, 'events/make_booking.html', {
-
-                'event': event,
-
-                'error_message': 'Not enough tickets available.'
-
-            })
-
-        booking = Booking(user=request.user, event=event, ticket_quantity=ticket_quantity)
-
-        booking.save()
-
-        return redirect('home')
-
-    return render(request, 'events/make_booking.html', {'event': event})
-
-@login_required
-def booking_success(request):
-    return render(request, 'events/booking_success.html')
-
-def view_bookings(request, event_id):
-    event = Event.objects.get(pk=event_id)
-    bookings = Booking.objects.filter(event=event)
-    context = {
-        'event': event,
-        'bookings': bookings
-    }
-    return render(request, 'events/view_bookings.html', context)
-
-@login_required
-
-def my_bookings(request):
-
-    bookings = Booking.objects.filter(user=request.user)
-
-    events = [booking.event for booking in bookings]
-
-    return render(request, 'bookings/my_bookings.html', {'events': events})
-
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .serializers import EventSerializer
-from .models import Event
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework.generics import RetrieveAPIView
 from .models import Event, Booking
-from .serializers import EventSerializer
+from .serializers import EventSerializer, BookingSerializer
+from django.utils import timezone
+from datetime import date
+
+class BookingDetailView(RetrieveAPIView):
+    queryset = Booking.objects.all()
+    serializer_class = BookingSerializer
+
+
+def send_booking_email(user, event, action):
+    subject = f"Booking {action.capitalize()} Confirmation"
+    message = f"""
+    Dear {user.username},
+
+    Your booking for the event '{event.name}' has been {action}.
+
+    Event Details:
+    Name: {event.name}
+    Date: {event.date}
+    {"Ticket Quantity: " + str(Booking.objects.get(user=user, event=event).ticket_quantity) if action == "created" else ""}
+    {"Total Cost: $" + str(Booking.objects.get(user=user, event=event).total_cost) if action == "created" else ""}
+
+    Thank you for using our service!
+
+    Best regards,
+    The Booking Team
+    """
+    from_email = settings.EMAIL_HOST_USER
+    recipient_list = [user.email]
+    send_mail(subject, message, from_email, recipient_list)
+
 
 class EventListView(APIView):
     def get(self, request):
-        user_id = request.query_params.get('user_id')  # Get user_id from query params
+        user_id = request.query_params.get('user_id')
         location = request.query_params.get('location', '')
         date = request.query_params.get('date', '')
         month = request.query_params.get('month', '')
         year = request.query_params.get('year', '')
-
-        events = Event.objects.all()
-
+        
+        # Get current date
+        current_date = timezone.now().date()
+        
+        # Filter events to include only upcoming events
+        events = Event.objects.filter(date__gte=current_date)
+        
         if user_id:
-            # Exclude events that the user has booked
             booked_events = Booking.objects.filter(user_id=user_id).values_list('event_id', flat=True)
             events = events.exclude(id__in=booked_events)
-
+        
         if location:
             events = events.filter(location__icontains=location)
-
+        
         if date:
             events = events.filter(date=date)
-
+        
         if month:
-            # Filtering by month regardless of year
             events = events.filter(date__month=month)
-
+        
         if year:
             events = events.filter(date__year=year)
-
+        
         serializer = EventSerializer(events, many=True)
         return Response(serializer.data)
 
@@ -155,7 +84,6 @@ class EventListView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class EventDetailView(APIView):
     def get_object(self, pk):
@@ -182,21 +110,22 @@ class EventDetailView(APIView):
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_booking(request):
     user = request.user
     event_id = request.data.get('event')
     ticket_quantity = request.data.get('ticket_quantity')
-
+    
     if not event_id or not ticket_quantity:
         return Response({"error": "Missing event or ticket quantity"}, status=400)
-
+    
     try:
         event = Event.objects.get(id=event_id)
     except Event.DoesNotExist:
         return Response({"error": "Event not found"}, status=404)
-
+    
     booking = Booking.objects.create(
         user=user,
         event=event,
@@ -204,13 +133,11 @@ def create_booking(request):
         total_cost=event.ticket_price * int(ticket_quantity)
     )
     
+    # Send creation email
+    send_booking_email(user, event, "created")
+    
     return Response({"message": "Booking successful"}, status=201)
 
-# views.py
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .models import Booking
-from .serializers import BookingSerializer
 
 @api_view(['GET'])
 def user_bookings(request, user_id):
@@ -228,22 +155,6 @@ def user_bookings(request, user_id):
     
     return Response(data)
 
-# views.py
-from rest_framework.generics import RetrieveAPIView
-from .models import Booking
-from .serializers import BookingSerializer
-
-class BookingDetailView(RetrieveAPIView):
-    queryset = Booking.objects.all()
-    serializer_class = BookingSerializer
-
-# views.py
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from .models import Booking
-from .serializers import BookingSerializer
 
 class CancelBookingView(APIView):
     permission_classes = [IsAuthenticated]
@@ -253,11 +164,127 @@ class CancelBookingView(APIView):
             booking = Booking.objects.get(pk=pk)
             if booking.user != request.user:
                 return Response({"error": "You do not have permission to cancel this booking"}, status=status.HTTP_403_FORBIDDEN)
+            event = booking.event
             booking.delete()
+            # Send cancellation email
+            send_booking_email(request.user, event, "cancelled")
             return Response({"message": "Booking cancelled successfully"}, status=status.HTTP_200_OK)
         except Booking.DoesNotExist:
             return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
-
     
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def create_booking(request):
+#     user = request.user
+#     event_id = request.data.get('event')
+#     ticket_quantity = request.data.get('ticket_quantity')
+
+#     if not event_id or not ticket_quantity:
+#         return Response({"error": "Missing event or ticket quantity"}, status=400)
+
+#     try:
+#         event = Event.objects.get(id=event_id)
+#     except Event.DoesNotExist:
+#         return Response({"error": "Event not found"}, status=404)
+
+#     # Calculate total cost
+#     total_cost = event.ticket_price * int(ticket_quantity)
+
+#     # Create a new booking with 'pending' status
+#     booking = Booking.objects.create(
+#         user=user,
+#         event=event,
+#         ticket_quantity=ticket_quantity,
+#         total_cost=total_cost,
+#         status='pending'
+#     )
+    
+#     # Prepare payment payload for PesePay, converting total_cost to float
+#     payment_payload = {
+#         'amount': float(total_cost),  # Convert Decimal to float
+#         'currency': 'USD',  # Adjust as needed
+#         'reference': f'TICKET-{booking.id}',
+#         'email': user.email,
+#         'callback_url': 'http://localhost:3000/',
+#         'return_url': 'http://localhost:3000/',
+#         'merchant_id': settings.PESEPAY_MERCHANT_ID
+#     }
+
+#     # Set the headers for the PesePay API request
+#     headers = {
+#         'Authorization': f'Bearer {settings.PESEPAY_API_KEY}',
+#         'Content-Type': 'application/json'
+#     }
+
+#     # Send payment request to PesePay
+#     response = requests.post(settings.PESEPAY_API_URL, json=payment_payload, headers=headers)
+
+#     if response.status_code == 200:
+#         payment_data = response.json()
+#         booking.payment_id = payment_data.get('payment_id')
+#         booking.save()
+        
+#         # Send creation email
+#         send_booking_email(user, event, "created")
+        
+#         return Response({
+#             'message': 'Booking successful',
+#             'payment_url': payment_data.get('payment_url')
+#         }, status=201)
+#     else:
+#         # Log the response text to understand the error
+#         print("PesePay Error Response:", response.text)
+#         return Response({
+#             'error': 'Failed to initiate payment',
+#             'details': response.text  # Return the error details from PesePay
+#         }, status=400)
+
+
+# from django.views.decorators.csrf import csrf_exempt
+# from django.http import JsonResponse
+# from .models import Booking
+# import json
+
+# @csrf_exempt
+# def payment_callback(request):
+#     if request.method == 'POST':
+#         try:
+#             # Parse callback data from PesePay
+#             callback_data = json.loads(request.body)
+            
+#             # Extract the booking reference and booking ID
+#             booking_reference = callback_data.get('reference', '')
+#             booking_id = booking_reference.split('-')[1] if '-' in booking_reference else None
+
+#             if not booking_id:
+#                 return JsonResponse({'error': 'Invalid booking reference'}, status=400)
+            
+#             # Retrieve the booking record
+#             try:
+#                 booking = Booking.objects.get(id=booking_id)
+#             except Booking.DoesNotExist:
+#                 return JsonResponse({'error': 'Booking not found'}, status=404)
+
+#             # Update booking based on payment status
+#             payment_status = callback_data.get('status', '').lower()
+            
+#             if payment_status == 'success':
+#                 booking.status = 'paid'
+#                 booking.save()
+#                 print(f"Payment successful for booking {booking_id}")
+#             elif payment_status == 'failed':
+#                 booking.status = 'failed'
+#                 booking.save()
+#                 print(f"Payment failed for booking {booking_id}")
+#             else:
+#                 return JsonResponse({'error': 'Unknown payment status'}, status=400)
+            
+#             return JsonResponse({'status': 'success'})
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+    
+#     return JsonResponse({'error': 'Invalid request method'}, status=405)
+

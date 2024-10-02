@@ -1,9 +1,9 @@
-// UserBookings.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Calendar from 'react-calendar';
 import { useNavigate } from 'react-router-dom';
 import 'react-calendar/dist/Calendar.css';
+import 'react-calendar/dist/Calendar.css'; 
 
 const UserBookings = ({ userId }) => {
   const [bookings, setBookings] = useState([]);
@@ -38,8 +38,8 @@ const UserBookings = ({ userId }) => {
   };
 
   return (
-    <div>
-      <h2>My Bookings</h2>
+    <div className='UserBookings'>
+      <h2 className='user-bookings__title'>My Bookings</h2>
       <Calendar
         onClickDay={handleDateClick}
         tileClassName={({ date, view }) => {
@@ -50,15 +50,7 @@ const UserBookings = ({ userId }) => {
             ) ? 'highlight' : null;
           }
         }}
-      />
-      <style>
-        {`
-          .highlight {
-            background-color: #90EE90 !important;
-            color: white !important;
-          }
-        `}
-      </style>
+        className="user-bookings__calendar"/>
     </div>
   );
 };

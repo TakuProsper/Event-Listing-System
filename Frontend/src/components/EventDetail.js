@@ -4,9 +4,7 @@ import { useParams } from 'react-router-dom';
 import BookingForm from './BookingForm';
 
 function EventDetail() {
-  const { eventId } = useParams();  // Get the event ID from the route
-  console.log(`eventId: ${eventId}`); // Log the eventId value for debugging
-
+  const { eventId } = useParams();
   const [event, setEvent] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,38 +16,59 @@ function EventDetail() {
       return;
     }
 
-    // Fetch the event details from the backend using the eventId
     axios.get(`http://localhost:8000/api/events/${eventId}/`)
       .then(response => {
-        setEvent(response.data);  // Set the event data
+        setEvent(response.data);
         setLoading(false);
       })
       .catch(error => {
-        setError(error.message);  // Capture error message
+        setError(error.message);
         setLoading(false);
       });
   }, [eventId]);
 
   return (
-    <div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>Error: {error}</p>
-      ) : (
-        <div>
-          <h2>{event.name}</h2>
-          <p><strong>Description:</strong> {event.description}</p>
-          <p><strong>Date:</strong> {event.date}</p>
-          <p><strong>Time:</strong> {event.time}</p>
-          <p><strong>Location:</strong> {event.location}</p>
-          <p><strong>Ticket Capacity:</strong> {event.ticket_capacity}</p>
-          <p><strong>Available Tickets:</strong> {event.available_tickets}</p>
-          <p><strong>Ticket Price:</strong> {event.ticket_price}</p>
-          {/* Pass eventId and ticketPrice to BookingForm */}
-          <BookingForm eventId={event.id} ticketPrice={event.ticket_price} />
+    <div className='EventDetails '>
+    <>
+    <section className="vh-150">
+    <div className="container py-5 h-100">
+      <div className="row d-flex justify-content-center align-items-center h-100">
+        <div className="col col-xl-10 d-flex justify-content-center align-items-center">
+          <div className="card" style={{ borderRadius: "1rem",width: '100%', maxWidth: '600px' }}>
+            <div className="row g-0">
+              <div className="col-md-12 col-lg-12 d-flex align-items-center" >
+                <div className="card-body p-4 p-lg-5 text-black" >
+                <div className='w-100'> 
+                  {loading ? (
+                    <p>Loading...</p>
+                  ) : error ? (
+                    <p className="error-message">Error: {error}</p> 
+                  ) : (
+                    <div className="event-container"> 
+                      <h2 className="event-title mb-4">{event.name}</h2>
+                      <div className="event-details"> 
+                        <p><span className="detail-label">Description:</span></p><p> {event.description}</p>
+                        <p><span className="detail-label">Date:</span> {event.date}</p>
+                        <p><span className="detail-label">Time:</span> {event.time}</p>
+                        <p><span className="detail-label">Location:</span> {event.location}</p>
+                        <p><span className="detail-label">Ticket Capacity:</span> {event.ticket_capacity}</p>
+                        <p><span className="detail-label">Available Tickets:</span> {event.available_tickets}</p>
+                        <p><span className="detail-label">Ticket Price:</span> {event.ticket_price}</p>
+                      </div>
+                      <BookingForm eventId={event.id} ticketPrice={event.ticket_price} />
+                    </div>
+                  )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+    </div>
+    
+  </section>
+  </>
     </div>
   );
 }

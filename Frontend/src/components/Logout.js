@@ -22,7 +22,7 @@ function Logout() {
   };
 
   return (
-    <div>
+    <div className='Logout'>
       <button onClick={handleLogout}>Logout</button>
     </div>
   );
