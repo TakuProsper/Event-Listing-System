@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-l#o2o72147o#6x13fl*evmoe#4gbhw_*!of06e6+83)&dj*v&)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -80,18 +80,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ELS.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 
 
 # Password validation
@@ -311,3 +299,13 @@ PESEPAY_API_KEY = '2fc1978431b434e4993a88a4d44e795f'  # Replace with your encryp
 PESEPAY_MERCHANT_ID = 'cdf9a77f-7348-4654-ad5a-11609b5672a7'  # Replace with your integration key
 PESEPAY_API_URL = 'https://api.pesepay.com/api/payments-engine/v1/payments/initiate'  # Default PesePay API URL
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('PGDATABASE'),
+        'USER': os.environ.get('PGUSER'),
+        'PASSWORD': os.environ.get('PGPASSWORD'),
+        'HOST': os.environ.get('PGHOST'),
+        'PORT': os.environ.get('PGPORT'),
+    }
+}
